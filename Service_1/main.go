@@ -23,8 +23,21 @@ func main() {
 	defer ch.Close()
 
 	// Объявляем очередь
-	q, err := ch.QueueDeclare(
-		"hello", // Имя очереди
+	q1, err := ch.QueueDeclare(
+		"Queue - 1", // Имя очереди
+		false,   // durable
+		false,   // delete when unused
+		false,   // exclusive
+		false,   // no-wait
+		nil,     // arguments
+	)
+	if err != nil {
+		log.Fatalf("Ошибка при объявлении очереди: %s", err)
+	}
+
+	// Объявляем очередь
+	q2, err := ch.QueueDeclare(
+		"Queue - 2", // Имя очереди
 		false,   // durable
 		false,   // delete when unused
 		false,   // exclusive
@@ -40,7 +53,22 @@ func main() {
 		message := "Hello, RabbitMQ!"
 		err := ch.Publish(
 			"",     // exchange
-			q.Name, // routing key
+			q1.Name, // routing key
+			false,  // mandatory
+			false,  // immediate
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        []byte(message),
+			})
+		if err != nil {
+			log.Printf("Ошибка при отправке сообщения: %s", err)
+		} else {
+			log.Printf("Отправлено сообщение: %s", message)
+		}
+
+		err = ch.Publish(
+			"",     // exchange
+			q2.Name, // routing key
 			false,  // mandatory
 			false,  // immediate
 			amqp.Publishing{
